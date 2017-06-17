@@ -4,6 +4,7 @@ require 'warden/github'
 require 'pg'
 require 'socket'
 require 'yaml'
+require 'haml'
 
 module Sinatra
 
@@ -95,7 +96,7 @@ module Sinatra
             nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
             FROM pg_stat_statements ORDER BY total_time DESC LIMIT 50;"
 
-        erb :index
+        haml :index
       else
         redirect '/login'
       end
@@ -104,7 +105,7 @@ module Sinatra
     get '/access_denied' do
       env['warden'].logout
       status 403
-      erb :access_denied
+      haml :access_denied
     end
 
     get '/login' do
@@ -115,7 +116,7 @@ module Sinatra
 
     get '/logout' do
       env['warden'].logout
-      erb :log_out
+      haml :log_out
     end
   end
 
@@ -133,68 +134,71 @@ run Sinatra.app
 __END__
 
 @@ access_denied
-<div class="alert alert-warning"><strong>Access denied</strong><p><%= env['warden'].message %></p></div>
+.alert.alert-warning
+  %strong Access denied
+  %p= env['warden'].message
 
-@@log_out
-<div class="alert alert-info"><strong>Logged out</strong></div>
+@@ log_out
+.alert.alert-info
+  %strong Logged out
 
 @@ layout
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<% if authenticated? %>
-  <title>Slow queries at <%= settings.hostname %></title>
-<% end %>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<style>
-.glyphicon { margin-right: 4px; } <!-- dirty fix for one's stupidity https://github.com/twbs/bootstrap/issues/2263#issuecomment-4189145 -->
-.navbar-nav > li > a, .navbar-brand {
-padding-top:1px !important; padding-bottom:0 !important;
-height: 15px;
-}
-.navbar {min-height:30px !important;}
-</style>
-</head>
-<body>
-<%= yield %>
-<div class="navbar navbar-inverse navbar-fixed-bottom"><div class="navbar-inner"><div class="container text-center">
-<ul class="nav navbar-nav">
-<% if authenticated? %>
-<li><p class="navbar-text"><%= env['warden'].user.login %>@<%= settings.hostname %></p></li>
-<% end %>
-<li><p class="navbar-text"><%= Time.now.utc.iso8601 %></p></li>
-</ul>
-<ul class="nav navbar-nav navbar-right">
-<% if authenticated? %>
-<li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span>Logout</a></li>
-<% else %>
-<li><a href="/login"><span class="glyphicon glyphicon-log-in"></span>Login</a></li>
-<% end %>
-</ul>
-</div></div></div>
-</body>
-</html>
+!!!
+%html{:lang => "en"}
+  %head
+    %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    - if authenticated?
+      %title
+        Slow queries at #{settings.hostname}
+    %meta{:charset => "utf-8"}/
+    %meta{:content => "width=device-width, initial-scale=1", :name => "viewport"}/
+    %link{:href => "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", :rel => "stylesheet"}/
+    %script{:src => "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"}
+  :css
+    .glyphicon { margin-right: 4px; }
+  %body
+    = yield
+    .navbar.navbar-inverse.navbar-fixed-bottom
+      .navbar-inner
+        .container.text-center
+          %ul.nav.navbar-nav
+            - if authenticated?
+              %li
+                %p.navbar-text
+                  = env['warden'].user.login
+                  @#{settings.hostname}
+            %li
+              %p.navbar-text= Time.now.utc.iso8601
+          %ul.nav.navbar-nav.navbar-right
+            - if authenticated?
+              %li
+                %a{:href => "/logout"}
+                  %span.glyphicon.glyphicon-log-out>
+                  Logout
+            - else
+              %li
+                %a{:href => "/login"}
+                  %span.glyphicon.glyphicon-log-in>
+                  Login
 
-@@ index
-<div class="jumbotron"><div class="container"><div class="table-responsive"><table class="table">
-<h2>Slow queries at <%= settings.hostname %></h2>
-<tr>
-<th>total_time</th>
-<th>query</th>
-<th>calls</th>
-<th>rows</th>
-<th>hit_percent</th>
-</tr>
-<% @slow_queries.each do |item| %>
-<tr>
-<td><%= item['total_time'] %></td>
-<td><%= item['query'] %></td>
-<td><%= item['calls'] %></td>
-<td><%= item['rows'] %></td>
-<td><%= item['hit_percent'] %></td>
-</tr>
-<% end %>
-</table></div></div></div>
+@@index
+.jumbotron
+  .container
+    .table-responsive
+      %table.table
+        %h2
+          Slow queries at #{settings.hostname}
+        %tr
+          %th total_time
+          %th query
+          %th calls
+          %th rows
+          %th hit_percent
+        - @slow_queries.each do |item|
+          %tr
+            %td= item['total_time']
+            %td= item['query']
+            %td= item['calls']
+            %td= item['rows']
+            %td= item['hit_percent']
+
