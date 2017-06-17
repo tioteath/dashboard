@@ -42,20 +42,12 @@ module Sinatra
 
     set :organization_authorized do
       v = ENV['GITHUB_ORGANIZATION_AUTHORIZED'] || []
-      if v.is_a? String
-        v.split ' '
-      else
-        v
-      end
+      if v.is_a? String then v.split ' ' else v end
     end
 
     set :team_authorized do
       v = ENV['GITHUB_TEAM_AUTHORIZED'] || []
-      if v.is_a? String
-        v.split ' '
-      else
-        v
-      end
+      if v.is_a? String then v.split ' ' else v end
     end
 
     def verify_browser_session
