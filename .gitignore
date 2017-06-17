@@ -50,21 +50,7 @@ build-iPhoneSimulator/
 **/.rvmrc
 **/.rvm
 
-**/.profile
-**/.bashrc
-**/.ssh
-**/.bash_history
-**/.cache
-
 Rakefile
 
-**/.viminfo
-**/.psql_history
-**/.*.swp
-**/.lesshst
-**/.bash_profile
-**/.mkshrc
-**/.pry_history
-**/.zlogin
-**/.zshrc
-**/.gitconfig
+.*
+!/.gitignore
