@@ -13,7 +13,7 @@ GEM
     concurrent-ruby (1.1.7)
     faraday (0.12.1)
       multipart-post (>= 1.2, < 3)
-    ffi (1.9.18)
+    ffi (1.13.1)
     haml (5.0.1)
       temple (>= 0.8.0)
       tilt
